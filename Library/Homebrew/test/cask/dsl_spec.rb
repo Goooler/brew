@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 RSpec.describe Cask::DSL, :cask, :no_api do
@@ -149,6 +150,23 @@ RSpec.describe Cask::DSL, :cask, :no_api do
         it "stores only the intel checksum" do
           expect(cask.sha256).to eq("imasha2intel")
         end
+      end
+    end
+
+    context "with macOS-only checksums on Linux" do
+      let(:cask) do
+        Cask::Cask.new("checksum-cask") do
+          sha256 arm: "imasha2arm", intel: "imasha2intel"
+        end
+      end
+
+      before do
+        allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_linux?: true,
+                                                            simulating_or_running_on_macos?: false)
+      end
+
+      it "returns nil when no Linux checksums are provided" do
+        expect(cask.sha256).to be_nil
       end
     end
   end
@@ -303,7 +321,7 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       expect(cask.caveats).to be_empty
 
       cask = Cask::Cask.new("cask-with-caveats") do
-        def caveats
+        define_method(:caveats) do
           <<~EOS
             When you install this Cask, you probably want to know this.
           EOS

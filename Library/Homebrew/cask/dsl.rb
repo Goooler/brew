@@ -441,6 +441,9 @@ module Cask
           val
         when String
           Checksum.new(val)
+        when nil
+          # Allow nil when we have platform-specific values but none match current system
+          val if @on_system_blocks_exist
         else
           raise CaskInvalidError.new(cask, "invalid 'sha256' value: #{val.inspect}")
         end
