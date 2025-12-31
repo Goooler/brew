@@ -446,7 +446,6 @@ module Cask
           raise CaskInvalidError.new(cask, "invalid 'sha256' value: #{val.inspect}") unless @on_system_blocks_exist
 
           val
-
         else
           raise CaskInvalidError.new(cask, "invalid 'sha256' value: #{val.inspect}")
         end
