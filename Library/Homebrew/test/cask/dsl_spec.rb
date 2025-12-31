@@ -169,6 +169,43 @@ RSpec.describe Cask::DSL, :cask, :no_api do
         expect(cask.sha256).to be_nil
       end
     end
+
+    context "with Linux-only checksums on macOS" do
+      let(:cask) do
+        Cask::Cask.new("checksum-cask") do
+          sha256 arm64_linux: "imasha2arm64linux", x86_64_linux: "imasha2x86_64linux"
+        end
+      end
+
+      before do
+        allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_linux?: false,
+                                                            simulating_or_running_on_macos?: true)
+        allow(Hardware::CPU).to receive(:type).and_return(:arm)
+      end
+
+      it "returns nil when no macOS checksums are provided" do
+        expect(cask.sha256).to be_nil
+      end
+    end
+
+    context "with both macOS and Linux checksums on Linux" do
+      let(:cask) do
+        Cask::Cask.new("checksum-cask") do
+          sha256 arm: "imasha2arm", intel: "imasha2intel",
+                 arm64_linux: "imasha2arm64linux", x86_64_linux: "imasha2x86_64linux"
+        end
+      end
+
+      before do
+        allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_linux?: true,
+                                                            simulating_or_running_on_macos?: false)
+        allow(Hardware::CPU).to receive(:type).and_return(:intel)
+      end
+
+      it "returns the Linux checksum" do
+        expect(cask.sha256).to eq("imasha2x86_64linux")
+      end
+    end
   end
 
   describe "no_autobump! stanze" do
